@@ -7,17 +7,28 @@ import express from 'express'
 import logger from 'morgan'
 import bodyParser from 'body-parser'
 import passport from 'passport'
-import cookieSession from 'cookie-session'
+import session from 'express-session'
+import http from 'http'
 
 const publicPath = path.resolve(__dirname, '../public')
 const server = express()
 
 
 if (process.env.NODE_ENV !== 'test') server.use(logger('dev'))
-server.use(cookieSession({
+server.sessionMiddleware = session({
   name: 'session',
-  keys: [process.env.SESSION_KEY]
-}))
+  secret: process.env.SESSION_KEY,
+  resave: true,
+  saveUninitialized: true,
+  cookie: {
+    secure: false,
+  }
+})
+server.use(server.sessionMiddleware)
+// server.use(cookieSession({
+//   name: 'session',
+//   keys: [process.env.SESSION_KEY]
+// }))
 server.use(passport.initialize());
 server.use(passport.session());
 server.use(express.static(publicPath))
@@ -42,7 +53,10 @@ server.use((req, res, next) => {
 server.start = function(port, callback){
   server.set('port', port)
   console.log(`http://localhost:${port}/`)
-  server.listen(port, callback)
+  const httpServer = http.createServer(server)
+  httpServer.listen(port, callback)
+  require('./socket')(server, httpServer)
+  return httpServer
 }
 
 

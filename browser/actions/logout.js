@@ -1,6 +1,5 @@
 import request from '../request'
 import state from '../state'
-import loadSession from './loadSession'
 
 export default function logout() {
   return request('post', '/api/logout')
@@ -8,5 +7,5 @@ export default function logout() {
       state.set({logoutError})
       throw logoutError
     })
-    .then(_ => loadSession())
+    .then(_ => window.location.href = window.location.origin )
 }

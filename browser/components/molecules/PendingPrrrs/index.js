@@ -19,16 +19,6 @@ export default class PendingPrrrs extends Component {
 
   claimPrrr(prrr){
     claimPrrr(prrr.id)
-      .then(_ => {
-        const url = `https://github.com/${prrr.owner}/${prrr.repo}/pull/${prrr.number}`
-        const popup = window.open(url, '_blank')
-        if (popup) popup.focus()
-      })
-      .catch(error => {
-        console.warn('Claim Error')
-        console.error(error)
-        this.setState({error})
-      })
   }
 
   renderAdditionalHeaders(){

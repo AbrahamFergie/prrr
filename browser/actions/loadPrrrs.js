@@ -1,15 +1,5 @@
-import request from '../request'
-import state from '../state'
+import socket from '../socket'
 
 export default function loadPrrrs() {
-  return request('get', '/api/pull-request-review-requests')
-    .then(response => {
-      state.set({
-        prrrs: response.json,
-        loadPrrrsError: null,
-      })
-    })
-    .catch(loadPrrrsError => {
-      state.set({loadPrrrsError})
-    })
+  socket.emit('loadPrrrs')
 }
