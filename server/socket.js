@@ -34,7 +34,7 @@ module.exports = (server, httpServer) => {
 
     socket.on('archive', payload => {
       commands.archivePrrr(payload.id)
-        .then(prrr => updatePrrr('removePrrr', prrr))
+        .then(prrr => updatePrrr('removePrrr', {prrr}))
     })
 
     socket.on('loadPrrs', () => {
@@ -43,29 +43,38 @@ module.exports = (server, httpServer) => {
         .catch(loadPrrrsError => state.set({loadPrrrsError}))
     })
 
-    socket.on('claimPrrr', prrrId => {
-      commands.markPullRequestAsClaimed(prrrId)
-        .then(prrr => updatePrrr('updatePrrr', prrr))
+    socket.on('claimPrrr', payload => {
+      commands.markPullRequestAsClaimed(payload.prrrId)
+        .then(prrr => updatePrrr('updatePrrr', {prrr}))
     })
 
-    socket.on('unclaimPrrr', prrrId => {
-      commands.unclaimPrrr(prrrId)
-      .then(prrr => updatePrrr('updatePrrr', prrr))
+    socket.on('unclaimPrrr', payload => {
+      commands.unclaimPrrr(payload.prrrId)
+      .then(prrr => updatePrrr('updatePrrr', {prrr}))
     })
 
-    socket.on('completePrrr', prrrId => {
-      commands.completePrrr(prrrId)
-        .then(prrr => updatePrrr('removePrrr', prrr))
+    socket.on('completePrrr', payload => {
+      commands.completePrrr(payload.prrrId)
+        .then(prrr => updatePrrr('removePrrr', {prrr}))
     })
 
-    socket.on('createPrrr', data => {
-      commands.createPrrr(data)
-        .then(prrr => updatePrrr('newPrrr', prrr))
+    socket.on('createPrrr', payload => {
+      commands.createPrrr(payload)
+        .then(prrr => {
+          updatePrrr('newPrrr', {prrr})
+        })
+        .catch(error => {
+          console.log('&&&&&&&&&&&&&& ???')
+          socket.emit('errorReport', {
+            error,
+            createPrrr: payload,
+          })
+        })
     })
 
-    const updatePrrr = ( type, prrr ) => {
-      socket.emit( type, prrr )
-      socket.broadcast.emit( type, prrr )
+    const updatePrrr = ( type, payload ) => {
+      socket.emit( type, payload.prrr )
+      socket.broadcast.emit( type, payload.prrr )
     }
   })
 }

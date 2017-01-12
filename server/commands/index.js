@@ -68,6 +68,9 @@ export default class Commands {
   createPrrr({owner, repo, number}){
     return this.github.pullRequests.get({owner, repo, number})
       .catch(originalError => {
+        console.log('WTF PANDA', {owner, repo, number})
+        console.log('PR not found')
+        console.error(originalError)
         const error = new Error('Pull Request Not Found')
         error.originalError = originalError
         error.status = 400
@@ -80,6 +83,7 @@ export default class Commands {
           username: this.currentUser.github_username,
         })
         .catch( originalError => {
+          console.log('checkCollaborator error', originalError)
           const error = new Error(`You are not a collaborator on ${owner}/${repo}`)
           error.originalError = originalError
           error.status = 400
