@@ -5,12 +5,16 @@ import logger from 'morgan'
 import bodyParser from 'body-parser'
 import passport from 'passport'
 import cookieSession from 'cookie-session'
+import http from 'http'
 
 const publicPath = path.resolve(__dirname, '../public')
 const server = express()
 
-
 if (process.env.NODE_ENV !== 'test') server.use(logger('dev'))
+
+if (process.env.NODE_ENV === 'test')
+  process.env.SESSION_KEY = 'FAKE_TEST_SESSION_KEY'
+
 server.use(cookieSession({
   name: 'session',
   keys: [process.env.SESSION_KEY]
@@ -23,11 +27,28 @@ server.use(bodyParser.json())
 server.use(require('./authentication'))
 server.use('/api', require('./api'))
 
+if(process.env.NODE_ENV === 'test') {
+  server.get('/__login/:githubId', (request, response) => {
+    const { githubId } = request.params
+    request.session = {
+      passport: {
+        user: {
+          github_id: Number(githubId)
+        }
+      }
+    }
+    response.send(`
+      logged in as ${githubId}
+      ${JSON.stringify(request.session, null, 4)}
+    `)
+  })
+
+}
+
 server.get('/*', (req, res, next) => {
   if (req.xhr) return next()
   res.sendFile(publicPath+'/index.html')
 });
-
 
 server.use((req, res, next) => {
   const error = new Error('Not Found');
@@ -35,13 +56,13 @@ server.use((req, res, next) => {
   next(error);
 });
 
-
 server.start = function(port, callback){
   server.set('port', port)
   console.log(`http://localhost:${port}/`)
-  server.listen(port, callback)
+  const httpServer = http.createServer(server)
+  httpServer.listen(port, callback)
+  return httpServer
 }
-
 
 if (process.env.NODE_ENV !== 'test'){
   server.start(process.env.PORT || '3000')
