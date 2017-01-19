@@ -27,14 +27,56 @@ export default class Queries {
       .first()
   }
 
-  getPrrrs(){
+  getIncompletePrrrs(){
     return this.knex
       .select('*')
       .from('pull_request_review_requests')
       .orderBy('created_at', 'desc')
       .where({
         archived_at: null,
-        completed_at: null,
+      })
+  }
+
+  getMyPrrs(){
+    return this.knex
+      .select('*')
+      .from('pull_request_review_requests')
+      .orderBy('created_at', 'desc')
+      .where({
+        requested_by: this.currentUser.github_username,
+      })
+      .orWhere({
+        claimed_by: this.currentUser.github_username,
+      })
+  }
+
+  uniquePrrrs( prrrs ){
+    const prrrsObject = {}
+    prrrs.forEach(prrr => {
+      prrrsObject[prrr.id] = prrr
+    })
+    return prrrs = Object.keys(prrrsObject).map(k => prrrsObject[k])
+  }
+
+  getPrrrs(){
+    return Promise.all([
+      this.getIncompletePrrrs(),
+      this.getMyPrrs()
+    ])
+      .then(([incompletePrrrs, myPrrrs]) => {
+        let newPrrrs = incompletePrrrs.concat(myPrrrs)
+        return this.uniquePrrrs( newPrrrs )
+      })
+  }
+
+  getRequestedPrrrsByUsername(){
+    return this.knex
+      .select('*')
+      .from('pull_request_review_requests')
+      .orderBy('created_at', 'desc')
+      .where({
+
+        archived_at: null,
       })
   }
 
